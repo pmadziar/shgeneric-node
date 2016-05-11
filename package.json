@@ -1,0 +1,33 @@
+{
+  "name": "shgeneric-node",
+  "version": "1.0.0",
+  "description": "SharePoint helper base on Promises",
+  "main": "dist/shgeneric.js",
+  "dependencies": {},
+  "devDependencies": {
+    "es6-promise": "^3.1.2",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-typescript": "^2.13.4",
+    "gulp-uglify": "^1.5.3",
+    "lodash-compat": "^3.10.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmadziar/shgeneric-node.git"
+  },
+  "keywords": [
+    "SharePoint",
+    "Promise"
+  ],
+  "author": "Pawe Madziar <pmadziar@madziar.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pmadziar/shgeneric-node/issues"
+  },
+  "homepage": "https://github.com/pmadziar/shgeneric-node#readme"
+}

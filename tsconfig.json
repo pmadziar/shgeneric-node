@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es3",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true
+    },
+    "files": [
+    "typings/main.d.ts",
+    "TS/globals.ts",
+    "TS/INvPromiseSvc.ts",
+    "TS/NvSiteSvc.ts",
+    "TS/NvWebSvc.ts",   
+    "TS/NvListSvc.ts",
+    "TS/NvListUtils.ts",
+    "TS/NvViewSvc.ts"
+    ]
+}
