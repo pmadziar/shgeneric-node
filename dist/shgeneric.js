@@ -1,4 +1,7 @@
 var shgeneric;
+
+var _  = require("lodash-compat");
+
 (function (shgeneric) {
     ;
     var Helpers = (function () {
@@ -347,3 +350,5 @@ var shgeneric;
     }());
     shgeneric.NvViewSvc = NvViewSvc;
 })(shgeneric || (shgeneric = {}));
+
+module.exports = shgeneric;
