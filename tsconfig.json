@@ -10,15 +10,24 @@
         "typings/index.d.ts",
         "TS/globals.ts",
         "TS/INvPromiseSvc.ts",
-        "TS/NvListSvc.ts",
-        "TS/NvListUtils.ts",
         "TS/NvSiteSvc.ts",
+        "TS/NvWebSvc.ts",
+        "TS/NvListSvc.ts",
         "TS/NvViewSvc.ts",   
-        "TS/NvWebSvc.ts"
+        "TS/NvListUtils.ts"
     ],
      "bundles": {
         "shgeneric": {
-            "files": [ "TS/NvListUtils.ts", "TS/NvViewSvc.ts", "typings/index.d.ts" ],
+            "files": [ 
+        "typings/index.d.ts",
+        "TS/globals.ts",
+        "TS/INvPromiseSvc.ts",
+        "TS/NvSiteSvc.ts",
+        "TS/NvWebSvc.ts",
+        "TS/NvListSvc.ts",
+        "TS/NvViewSvc.ts",   
+        "TS/NvListUtils.ts"
+                ],
             "config": { 
                 "outDir": "./bundles"  
             }

@@ -1,6 +1,6 @@
 "use strict";
-var es6_promise_1 = require("es6-promise");
 var _ = require("lodash");
+var es6_promise_1 = require("es6-promise");
 ;
 var Helpers = (function () {
     function Helpers() {
@@ -60,6 +60,204 @@ function cloneSpCamlQuery(query) {
     return ret;
 }
 exports.cloneSpCamlQuery = cloneSpCamlQuery;
+var NvSiteSvc = (function () {
+    function NvSiteSvc(siteServerRelativeUrl) {
+        var _this = this;
+        this.GetAsync = function () {
+            return new es6_promise_1.Promise(function (resolve, reject) {
+                if (_.isEmpty(_this.siteServerRelativeUrl)) {
+                    _this.ClientContext = SP.ClientContext.get_current();
+                }
+                else {
+                    _this.ClientContext = new SP.ClientContext(_this.siteServerRelativeUrl);
+                }
+                _this._site = _this.ClientContext.get_site();
+                _this.ClientContext.load(_this._site);
+                _this.ClientContext.executeQueryAsync(function () {
+                    _this.Target = _this._site;
+                    _this.Site = _this;
+                    resolve(es6_promise_1.Promise.resolve(_this));
+                }, function (sender, args) {
+                    var error = new Error(args.get_message());
+                    reject(error);
+                });
+            });
+        };
+        this.ClientContext = null;
+        this.Site = null;
+        this.Web = null;
+        this.List = null;
+        this.Target = null;
+        if (!_.isEmpty(siteServerRelativeUrl)) {
+            this.siteServerRelativeUrl = siteServerRelativeUrl;
+        }
+    }
+    return NvSiteSvc;
+}());
+exports.NvSiteSvc = NvSiteSvc;
+var NvWebSvc = (function () {
+    function NvWebSvc(webUrlOrId, site) {
+        var _this = this;
+        this.webUrlOrId = null;
+        this._web = null;
+        this._sitePromise = null;
+        this.GetAsync = function () {
+            return new es6_promise_1.Promise(function (resolve, reject) {
+                try {
+                    if (_this._sitePromise == null) {
+                        _this._sitePromise = (new NvSiteSvc(null)).GetAsync();
+                    }
+                    es6_promise_1.Promise.resolve(_this._sitePromise).then(function (site) {
+                        _this.Site = site;
+                        _this.ClientContext = _this.Site.ClientContext;
+                        if (_.isEmpty(_this.webUrlOrId)) {
+                            _this._web = _this.ClientContext.get_web();
+                        }
+                        else {
+                            if (Helpers.guidRx.test(_this.webUrlOrId)) {
+                                var webGuid = new SP.Guid(_this.webUrlOrId);
+                                _this._web = _this.Site.Target.openWebById(webGuid);
+                            }
+                            else {
+                                _this._web = _this.Site.Target.openWeb(_this.webUrlOrId);
+                            }
+                        }
+                        _this.ClientContext.load(_this._web);
+                        _this.ClientContext.executeQueryAsync(function () {
+                            _this.Web = _this;
+                            _this.Target = _this._web;
+                            resolve(es6_promise_1.Promise.resolve(_this));
+                        }, function (sender, args) {
+                            var error = new Error(args.get_message());
+                            reject(error);
+                        });
+                    });
+                }
+                catch (ex) {
+                    var error = new Error(ex);
+                    reject(error);
+                }
+            });
+        };
+        this.ClientContext = null;
+        this.Site = null;
+        this.Web = null;
+        this.List = null;
+        this.Target = null;
+        if (_.isEmpty(webUrlOrId)) {
+            this.webUrlOrId = webUrlOrId;
+        }
+        if (typeof site !== "undefined" && site !== null) {
+            this._sitePromise = site;
+        }
+    }
+    return NvWebSvc;
+}());
+exports.NvWebSvc = NvWebSvc;
+var NvListSvc = (function () {
+    function NvListSvc(listNameOrId, web) {
+        var _this = this;
+        this._webPromise = null;
+        this.GetAsync = function () {
+            return new es6_promise_1.Promise(function (resolve, reject) {
+                try {
+                    if (_this._webPromise == null) {
+                        _this._webPromise = (new NvWebSvc()).GetAsync();
+                    }
+                    es6_promise_1.Promise.resolve(_this._webPromise).then(function (web) {
+                        _this.Web = web;
+                        _this.Site = _this.Web.Site;
+                        _this.ClientContext = _this.Web.ClientContext;
+                        var lists = _this.Web.Target.get_lists();
+                        if (Helpers.guidRx.test(_this.listNameOrId)) {
+                            var listGuid = new SP.Guid(_this.listNameOrId);
+                            _this._list = lists.getById(listGuid);
+                        }
+                        else {
+                            _this._list = lists.getByTitle(_this.listNameOrId);
+                        }
+                        _this.ClientContext.load(_this._list);
+                        _this.ClientContext.executeQueryAsync(function () {
+                            _this.List = _this;
+                            _this.Target = _this._list;
+                            resolve(es6_promise_1.Promise.resolve(_this));
+                        }, function (sender, args) {
+                            var error = new Error(args.get_message());
+                            reject(error);
+                        });
+                    });
+                }
+                catch (ex) {
+                    var error = new Error(ex);
+                    reject(error);
+                }
+            });
+        };
+        this.ClientContext = null;
+        this.Site = null;
+        this.Web = null;
+        this.List = null;
+        this.Target = null;
+        this.listNameOrId = listNameOrId;
+        if (typeof web !== "undefined" && web !== null) {
+            this._webPromise = web;
+        }
+    }
+    return NvListSvc;
+}());
+exports.NvListSvc = NvListSvc;
+var NvViewSvc = (function () {
+    function NvViewSvc(viewNameOrId, list) {
+        var _this = this;
+        this._listPromise = null;
+        this.GetAsync = function () {
+            return new es6_promise_1.Promise(function (resolve, reject) {
+                try {
+                    if (_this._listPromise == null) {
+                        throw new Error('The list promise is null');
+                    }
+                    es6_promise_1.Promise.resolve(_this._listPromise).then(function (list) {
+                        _this.List = list;
+                        _this.Web = _this.List.Web;
+                        _this.Site = _this.List.Site;
+                        _this.ClientContext = _this.List.ClientContext;
+                        var views = _this.List.Target.get_views();
+                        if (Helpers.guidRx.test(_this.viewNameOrId)) {
+                            var viewGuid = new SP.Guid(_this.viewNameOrId);
+                            _this._view = views.getById(viewGuid);
+                        }
+                        else {
+                            _this._view = views.getByTitle(_this.viewNameOrId);
+                        }
+                        _this.ClientContext.load(_this._view);
+                        _this.ClientContext.executeQueryAsync(function () {
+                            _this.Target = _this._view;
+                            resolve(es6_promise_1.Promise.resolve(_this));
+                        }, function (sender, args) {
+                            var error = new Error(args.get_message());
+                            reject(error);
+                        });
+                    });
+                }
+                catch (ex) {
+                    var error = new Error(ex);
+                    reject(error);
+                }
+            });
+        };
+        this.ClientContext = null;
+        this.Site = null;
+        this.Web = null;
+        this.List = null;
+        this.Target = null;
+        this.viewNameOrId = viewNameOrId;
+        if (typeof list !== "undefined" && list !== null) {
+            this._listPromise = list;
+        }
+    }
+    return NvViewSvc;
+}());
+exports.NvViewSvc = NvViewSvc;
 var NvListUtils = (function () {
     function NvListUtils() {
     }
@@ -143,55 +341,3 @@ var NvListUtils = (function () {
     return NvListUtils;
 }());
 exports.NvListUtils = NvListUtils;
-var NvViewSvc = (function () {
-    function NvViewSvc(viewNameOrId, list) {
-        var _this = this;
-        this._listPromise = null;
-        this.GetAsync = function () {
-            return new es6_promise_1.Promise(function (resolve, reject) {
-                try {
-                    if (_this._listPromise == null) {
-                        throw new Error('The list promise is null');
-                    }
-                    es6_promise_1.Promise.resolve(_this._listPromise).then(function (list) {
-                        _this.List = list;
-                        _this.Web = _this.List.Web;
-                        _this.Site = _this.List.Site;
-                        _this.ClientContext = _this.List.ClientContext;
-                        var views = _this.List.Target.get_views();
-                        if (Helpers.guidRx.test(_this.viewNameOrId)) {
-                            var viewGuid = new SP.Guid(_this.viewNameOrId);
-                            _this._view = views.getById(viewGuid);
-                        }
-                        else {
-                            _this._view = views.getByTitle(_this.viewNameOrId);
-                        }
-                        _this.ClientContext.load(_this._view);
-                        _this.ClientContext.executeQueryAsync(function () {
-                            _this.Target = _this._view;
-                            resolve(es6_promise_1.Promise.resolve(_this));
-                        }, function (sender, args) {
-                            var error = new Error(args.get_message());
-                            reject(error);
-                        });
-                    });
-                }
-                catch (ex) {
-                    var error = new Error(ex);
-                    reject(error);
-                }
-            });
-        };
-        this.ClientContext = null;
-        this.Site = null;
-        this.Web = null;
-        this.List = null;
-        this.Target = null;
-        this.viewNameOrId = viewNameOrId;
-        if (typeof list !== "undefined" && list !== null) {
-            this._listPromise = list;
-        }
-    }
-    return NvViewSvc;
-}());
-exports.NvViewSvc = NvViewSvc;

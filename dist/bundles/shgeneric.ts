@@ -1,17 +1,6 @@
 import main = require('~lodash/index');
-import { Promise } from "es6-promise";
 import * as _ from "lodash";
-                                                                                        
-
-export interface INvPromiseSvc<T> {
-	GetAsync: () => Promise<INvPromiseSvc<T>>;
-	ClientContext: SP.ClientContext;
-	Site: INvPromiseSvc<SP.Site>;
-	Web: INvPromiseSvc<SP.Web>;
-	List: INvPromiseSvc<SP.List>;
-	Target: T;
-}
-
+import { Promise } from "es6-promise";
                                                                                                                        
 
 export interface IDictionary<T> {
@@ -78,6 +67,260 @@ export function cloneSpCamlQuery(query: SP.CamlQuery): SP.CamlQuery {
 	}
 
 	return ret;
+}
+
+                                                                                        
+
+export interface INvPromiseSvc<T> {
+	GetAsync: () => Promise<INvPromiseSvc<T>>;
+	ClientContext: SP.ClientContext;
+	Site: INvPromiseSvc<SP.Site>;
+	Web: INvPromiseSvc<SP.Web>;
+	List: INvPromiseSvc<SP.List>;
+	Target: T;
+}
+
+                                                                                                                                                                         
+
+	export class NvSiteSvc implements INvPromiseSvc<SP.Site> {
+		private siteServerRelativeUrl: string;
+		private _site: SP.Site;
+
+        constructor(siteServerRelativeUrl?: string) {
+            if (!_.isEmpty(siteServerRelativeUrl)) {
+                this.siteServerRelativeUrl = siteServerRelativeUrl;
+            }
+        }
+
+		GetAsync: () => Promise<INvPromiseSvc<SP.Site>> = (): Promise<INvPromiseSvc<SP.Site>> => {
+			return new Promise<INvPromiseSvc<SP.Site>>((resolve: (rsite: Promise<NvSiteSvc>) => void, reject: (error: any) => void): void => {
+
+	 			if (_.isEmpty(this.siteServerRelativeUrl)) {
+	 				this.ClientContext = SP.ClientContext.get_current();
+	 			} else {
+	 				this.ClientContext = new SP.ClientContext(this.siteServerRelativeUrl);
+	 			}
+	 			this._site = this.ClientContext.get_site();
+				this.ClientContext.load(this._site);
+
+	 			this.ClientContext.executeQueryAsync(
+	 				() :void => {
+                         this.Target = this._site;
+					     this.Site = this;
+						resolve(Promise.resolve(this));
+	 				},
+					(sender: any, args: SP.ClientRequestFailedEventArgs): void => {
+						let error = new Error(args.get_message());
+						reject(error);
+	 				}
+	 			);
+			});
+		};
+
+		public ClientContext: SP.ClientContext = null;
+		public Site: INvPromiseSvc<SP.Site> = null;
+		public Web: INvPromiseSvc<SP.Web> = null;
+		public List: INvPromiseSvc<SP.List> = null;
+		public Target: SP.Site = null;
+	}
+
+                                                                                                                                                                                                                                                         
+
+export class NvWebSvc implements INvPromiseSvc<SP.Web> {
+	private webUrlOrId: string = null;
+	private _web: SP.Web = null;
+	private _sitePromise: Promise<INvPromiseSvc<SP.Site>> = null;
+
+	//private basicProperties: Array<string> = [ "currentUser", "description", "id", "lists", "masterUrl", "title", "url"];
+
+	constructor(webUrlOrId?: string, site?: Promise<INvPromiseSvc<SP.Site>>) {
+		if (_.isEmpty(webUrlOrId)) {
+			this.webUrlOrId = webUrlOrId;
+		}
+		if(typeof site !== "undefined" && site !== null){
+			this._sitePromise = site;
+		}
+	}
+
+	GetAsync: () => Promise<INvPromiseSvc<SP.Web>> = (): Promise<INvPromiseSvc<SP.Web>> => {
+		return new Promise<INvPromiseSvc<SP.Web>>((resolve: (webProm: Promise<NvWebSvc>) => void, reject: (error: any) => void): void => {
+			try{
+				if (this._sitePromise == null) {
+					this._sitePromise = (new NvSiteSvc(null)).GetAsync();
+				}
+
+				Promise.resolve(this._sitePromise).then((site: INvPromiseSvc<SP.Site>): void => {
+					this.Site = site;
+					this.ClientContext = this.Site.ClientContext;
+
+					if (_.isEmpty(this.webUrlOrId)) {
+						this._web = this.ClientContext.get_web();
+					} else {
+						if (Helpers.guidRx.test(this.webUrlOrId)) {
+							let webGuid: SP.Guid = new SP.Guid(this.webUrlOrId);
+							this._web = this.Site.Target.openWebById(webGuid);
+						} else {
+							this._web = this.Site.Target.openWeb(this.webUrlOrId);
+						}
+					}
+					this.ClientContext.load(this._web);
+					this.ClientContext.executeQueryAsync(
+						(): void => {
+							this.Web = this;
+							this.Target = this._web;
+							resolve(Promise.resolve(this));
+						},
+						(sender: any, args: SP.ClientRequestFailedEventArgs): void => {
+							let error = new Error(args.get_message());
+							reject(error);
+						}
+					);
+				});
+			} catch(ex){
+				let error = new Error(ex);
+				reject(error);
+			}
+
+		});
+	};
+
+	public ClientContext: SP.ClientContext = null;
+	public Site: INvPromiseSvc<SP.Site> = null;
+	public Web: INvPromiseSvc<SP.Web> = null;
+	public List: INvPromiseSvc<SP.List> = null;
+	public Target: SP.Web = null;
+}
+
+                                                                                                                                                                                                                        
+
+export class NvListSvc implements INvPromiseSvc<SP.List> {
+    private listNameOrId: string;
+    private _list: SP.List;
+    private _webPromise: Promise<INvPromiseSvc<SP.Web>> = null;
+
+
+    //private basicProperties: Array<string> = [ "currentUser", "description", "id", "lists", "masterUrl", "title", "url"];
+
+    constructor(listNameOrId: string, web?: Promise<INvPromiseSvc<SP.Web>>) {
+        this.listNameOrId = listNameOrId;
+        if(typeof web !== "undefined" && web !== null){
+            this._webPromise = web;
+        }
+    }
+
+    GetAsync: () => Promise<INvPromiseSvc<SP.List>> = (): Promise<INvPromiseSvc<SP.List>> => {
+        return new Promise<INvPromiseSvc<SP.List>>((resolve: (listProm: Promise<INvPromiseSvc<SP.List>>) => void, reject: (error: any) => void): void => {
+            try{
+                if (this._webPromise == null) {
+                    this._webPromise = (new NvWebSvc()).GetAsync();
+                }
+
+                Promise.resolve(this._webPromise).then((web: INvPromiseSvc<SP.Web>): void => {
+                    this.Web = web;
+                    this.Site = this.Web.Site;
+                    this.ClientContext = this.Web.ClientContext;
+
+                    let lists: SP.ListCollection = this.Web.Target.get_lists();
+                    if (Helpers.guidRx.test(this.listNameOrId)) {
+                        let listGuid: SP.Guid = new SP.Guid(this.listNameOrId);
+                        this._list = lists.getById(listGuid);
+                    } else {
+                        this._list = lists.getByTitle(this.listNameOrId);
+                    }
+
+                    this.ClientContext.load(this._list);
+                    this.ClientContext.executeQueryAsync(
+                        (): void => {
+                            this.List = this;
+                            this.Target = this._list;
+                            resolve(Promise.resolve(this));
+                        },
+                        (sender: any, args: SP.ClientRequestFailedEventArgs): void => {
+                            let error = new Error(args.get_message());
+                            reject(error);
+                        }
+                    );
+
+                });
+            } catch (ex) {
+                let error = new Error(ex);
+                reject(error);
+            }
+
+        });
+    };
+
+    public ClientContext: SP.ClientContext = null;
+    public Site: INvPromiseSvc<SP.Site> = null;
+    public Web: INvPromiseSvc<SP.Web> = null;
+    public List: INvPromiseSvc<SP.List> = null;
+    public Target: SP.List = null;
+}
+
+                                                                                                                                                                                                               
+
+export class NvViewSvc implements INvPromiseSvc<SP.View> {
+    private viewNameOrId: string;
+    private _view: SP.View;
+    private _listPromise: Promise<INvPromiseSvc<SP.List>> = null;
+
+
+    //private basicProperties: Array<string> = [ "currentUser", "description", "id", "lists", "masterUrl", "title", "url"];
+
+    constructor(viewNameOrId: string, list: Promise<INvPromiseSvc<SP.List>>) {
+        this.viewNameOrId = viewNameOrId;
+        if(typeof list !== "undefined" && list !== null){
+            this._listPromise = list;
+        }
+    }
+
+    GetAsync: () => Promise<INvPromiseSvc<SP.View>> = (): Promise<INvPromiseSvc<SP.View>> => {
+        return new Promise<INvPromiseSvc<SP.View>>((resolve: (listProm: Promise<INvPromiseSvc<SP.View>>) => void, reject: (error: any) => void): void => {
+            try{
+                if (this._listPromise == null) {
+                    throw new Error('The list promise is null');
+                }
+
+                Promise.resolve(this._listPromise).then((list: INvPromiseSvc<SP.List>): void => {
+                    this.List = list;
+                    this.Web = this.List.Web;
+                    this.Site = this.List.Site;
+                    this.ClientContext = this.List.ClientContext;
+
+                    let views: SP.ViewCollection = this.List.Target.get_views();
+                    if (Helpers.guidRx.test(this.viewNameOrId)) {
+                        let viewGuid: SP.Guid = new SP.Guid(this.viewNameOrId);
+                        this._view = views.getById(viewGuid);
+                    } else {
+                        this._view = views.getByTitle(this.viewNameOrId);
+                    }
+
+                    this.ClientContext.load(this._view);
+                    this.ClientContext.executeQueryAsync(
+                        (): void => {
+                            this.Target = this._view;
+                            resolve(Promise.resolve(this));
+                        },
+                        (sender: any, args: SP.ClientRequestFailedEventArgs): void => {
+                            let error = new Error(args.get_message());
+                            reject(error);
+                        }
+                    );
+
+                });
+            } catch (ex) {
+                let error = new Error(ex);
+                reject(error);
+            }
+
+        });
+    };
+
+    public ClientContext: SP.ClientContext = null;
+    public Site: INvPromiseSvc<SP.Site> = null;
+    public Web: INvPromiseSvc<SP.Web> = null;
+    public List: INvPromiseSvc<SP.List> = null;
+    public Target: SP.View = null;
 }
 
                                                                                                                                                                                                                                                       
@@ -175,71 +418,5 @@ export class NvListUtils {
 			});
 		});
 	};
-}
-
-                                                                                                                                                                                                               
-
-export class NvViewSvc implements INvPromiseSvc<SP.View> {
-    private viewNameOrId: string;
-    private _view: SP.View;
-    private _listPromise: Promise<INvPromiseSvc<SP.List>> = null;
-
-
-    //private basicProperties: Array<string> = [ "currentUser", "description", "id", "lists", "masterUrl", "title", "url"];
-
-    constructor(viewNameOrId: string, list: Promise<INvPromiseSvc<SP.List>>) {
-        this.viewNameOrId = viewNameOrId;
-        if(typeof list !== "undefined" && list !== null){
-            this._listPromise = list;
-        }
-    }
-
-    GetAsync: () => Promise<INvPromiseSvc<SP.View>> = (): Promise<INvPromiseSvc<SP.View>> => {
-        return new Promise<INvPromiseSvc<SP.View>>((resolve: (listProm: Promise<INvPromiseSvc<SP.View>>) => void, reject: (error: any) => void): void => {
-            try{
-                if (this._listPromise == null) {
-                    throw new Error('The list promise is null');
-                }
-
-                Promise.resolve(this._listPromise).then((list: INvPromiseSvc<SP.List>): void => {
-                    this.List = list;
-                    this.Web = this.List.Web;
-                    this.Site = this.List.Site;
-                    this.ClientContext = this.List.ClientContext;
-
-                    let views: SP.ViewCollection = this.List.Target.get_views();
-                    if (Helpers.guidRx.test(this.viewNameOrId)) {
-                        let viewGuid: SP.Guid = new SP.Guid(this.viewNameOrId);
-                        this._view = views.getById(viewGuid);
-                    } else {
-                        this._view = views.getByTitle(this.viewNameOrId);
-                    }
-
-                    this.ClientContext.load(this._view);
-                    this.ClientContext.executeQueryAsync(
-                        (): void => {
-                            this.Target = this._view;
-                            resolve(Promise.resolve(this));
-                        },
-                        (sender: any, args: SP.ClientRequestFailedEventArgs): void => {
-                            let error = new Error(args.get_message());
-                            reject(error);
-                        }
-                    );
-
-                });
-            } catch (ex) {
-                let error = new Error(ex);
-                reject(error);
-            }
-
-        });
-    };
-
-    public ClientContext: SP.ClientContext = null;
-    public Site: INvPromiseSvc<SP.Site> = null;
-    public Web: INvPromiseSvc<SP.Web> = null;
-    public List: INvPromiseSvc<SP.List> = null;
-    public Target: SP.View = null;
 }
 
