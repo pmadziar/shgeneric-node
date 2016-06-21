@@ -1,4 +1,3 @@
-import main = require('~lodash/index');
 import * as _ from "lodash";
 import { Promise } from "es6-promise";
                                                                                                                        
