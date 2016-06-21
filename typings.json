@@ -4,8 +4,8 @@
     "es6-promise": "registry:npm/es6-promise#3.0.0+20160211003958",
     "lodash": "registry:npm/lodash#4.0.0+20160416211519"
   },
-  "ambientDependencies": {
+  "globalDependencies": {
     "microsoft.ajax": "registry:dt/microsoft.ajax#0.0.0+20160317120654",
-    "sharepoint": "registry:dt/sharepoint#0.0.0+20160317120654"
+    "sharepoint": "registry:dt/sharepoint#0.0.0+20160602140352"
   }
 }

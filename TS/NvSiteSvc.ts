@@ -1,7 +1,9 @@
-/// <reference path="INvPromiseSvc.ts" />
+/// <reference path="../typings/index.d.ts" />
 
+import * as _ from "lodash"; 
+import { Promise } from "es6-promise";
+import { INvPromiseSvc } from "./INvPromiseSvc";
 
-module shgeneric {
 	export class NvSiteSvc implements INvPromiseSvc<SP.Site> {
 		private siteServerRelativeUrl: string;
 		private _site: SP.Site;
@@ -43,4 +45,3 @@ module shgeneric {
 		public List: INvPromiseSvc<SP.List> = null;
 		public Target: SP.Site = null;
 	}
-}
