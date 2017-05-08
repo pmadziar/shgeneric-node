@@ -14,7 +14,7 @@ gulp.task( 'ts-common', function() {
         {
             logLevel: 1,
             compilerOptions: {
-                "module": "commonjs"
+                listFiles: true
             }
         })
         .pipe( gulp.dest( './dist' ) );

@@ -98,4 +98,32 @@ export class NvListUtils {
 			});
 		});
 	};
+
+
+public static getListItemById = (listPromise: Promise<INvPromiseSvc<SP.List>>, id: number): Promise<SP.ListItem> => {
+		return new Promise<SP.ListItem>((resolve: (value: SP.ListItem) => void, reject: (error: any) => void): void=> {
+			let allItems: Array<SP.ListItem> = new Array<SP.ListItem>();
+
+			Promise.resolve(listPromise).then((value: INvPromiseSvc<SP.List>): void => {
+				let ctx: SP.ClientContext = value.ClientContext;
+				let lst: SP.List = value.Target;
+
+				let itm:SP.ListItem = lst.getItemById(id);
+				ctx.load(itm);
+
+				ctx.executeQueryAsync((sender: any, args: SP.ClientRequestEventArgs): void => {
+						resolve(itm);
+				},
+				(sender: any, args: SP.ClientRequestFailedEventArgs): void => {
+						let exc = new Error(args.get_message());
+						reject(exc);
+				});
+					
+			}).then(undefined, (erorr: any): void => {
+				reject(erorr);
+			});
+		});
+	};
 }
+
+

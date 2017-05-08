@@ -20,6 +20,7 @@
         "shgeneric": {
             "files": [ 
         "typings/index.d.ts",
+        "TS/index.d.ts",
         "TS/globals.ts",
         "TS/INvPromiseSvc.ts",
         "TS/NvSiteSvc.ts",
