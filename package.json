@@ -1,23 +1,18 @@
 {
   "name": "shgeneric-node",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "SharePoint helper base on Promises",
   "main": "dist/shgeneric.js",
-  "dependencies": {},
+  "dependencies": {
+    "es6-promise": "latest",
+    "lodash": "latest"
+  },
   "devDependencies": {
-    "es6-promise": "^4.1.0",
-    "gulp": "^3.9.1",
-    "gulp-concat": "^2.6.0",
-    "gulp-sourcemaps": "^2.6.0",
-    "gulp-typescript": "^3.1.6",
-    "gulp-uglify": "^2.1.2",
-    "lodash-compat": "^3.10.2",
-    "tsproject": "^2.1.0",
-    "typings": "^2.1.1"
+    "@types/es6-promise": "^3.3.0",
+    "@types/lodash": "^4.14.117",
+    "@types/sharepoint": "^2016.1.2"
   },
-  "scripts": {
-    "gulp": "gulp"
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pmadziar/shgeneric-node.git"

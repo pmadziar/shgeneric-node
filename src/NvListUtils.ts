@@ -1,5 +1,3 @@
-/// <reference path="../typings/index.d.ts" />
-
 import * as _ from "lodash"; 
 import { Promise } from "es6-promise";
 import { INvPromiseSvc } from "./INvPromiseSvc";
@@ -7,7 +5,7 @@ import { Helpers, iterateSpCollection, cloneSpCamlQuery } from "./globals";
 
 export class NvListUtils {
 	public static getListFieldsInternalNames = (listPromise: Promise<INvPromiseSvc<SP.List>>): Promise<Array<string>> => {
-		return new Promise<Array<string>>((resolve:(value:Array<string>) => Promise<Array<string>>, reject:(error:any) => void):void=>{
+		return new Promise<Array<string>>((resolve:(value:Array<string>) => void, reject:(error:any) => void):void=>{
 			Promise.resolve(listPromise).then((value: INvPromiseSvc<SP.List>):void =>{
 				let ctx: SP.ClientContext = value.ClientContext;
 				let lst: SP.List = value.Target;
@@ -125,5 +123,3 @@ public static getListItemById = (listPromise: Promise<INvPromiseSvc<SP.List>>, i
 		});
 	};
 }
-
-

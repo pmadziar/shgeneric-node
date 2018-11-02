@@ -44,3 +44,5 @@ pkg
 pkgobj
 .vs
 .csproj.user
+
+dist/
